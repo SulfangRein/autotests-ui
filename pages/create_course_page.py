@@ -162,7 +162,7 @@ class CreateCoursePage(BasePage):
 
         expect(self.exercises_empty_view_description).to_be_visible()
         expect(self.exercises_empty_view_description).to_have_text(
-            'Click on "Create exercise" button to create new exercise"'
+            'Click on "Create exercise" button to create new exercise'
         )
 
     def click_delete_exercise_button(self, index: int):

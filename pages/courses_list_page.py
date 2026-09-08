@@ -27,16 +27,16 @@ class CourseListPage(BasePage):
 
     def check_visible_courses_title(self):
         expect(self.courses_title).to_be_visible()
-        expect(self.courses_title).to_be_text('Courses')
+        expect(self.courses_title).to_have_text('Courses')
 
     def check_visible_empty_view(self):
         expect(self.empty_view_icon).to_be_visible()
 
         expect(self.empty_view_title).to_be_visible()
-        expect(self.empty_view_title).to_be_text('There is no results')
+        expect(self.empty_view_title).to_have_text('There is no results')
 
         expect(self.empty_view_description).to_be_visible()
-        expect(self.empty_view_description).to_be_text('Results from the load test pipeline will be displayed here')
+        expect(self.empty_view_description).to_have_text('Results from the load test pipeline will be displayed here')
 
     def check_visible_create_course_button(self):
         expect(self.create_course_button).to_be_visible()
