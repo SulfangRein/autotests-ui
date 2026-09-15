@@ -1,12 +1,29 @@
+import allure
 import pytest
+from allure_commons.types import Severity
+
 from pages.auth.login_page import LoginPage
 from pages.auth.registration_page import RegistrationPage
 from pages.dashboard.dashboard_page import DashboardPage
+from tools.allure.epics import AllureEpic
+from tools.allure.features import AllureFeature
+from tools.allure.stories import AllureStory
+from tools.allure.tags import AllureTag
 
 
 @pytest.mark.regression
 @pytest.mark.authorization
+@allure.epic(AllureEpic.LMS)
+@allure.feature(AllureFeature.AUTHENTICATION)
+@allure.story(AllureStory.AUTHORIZATION)
+@allure.tag(AllureTag.REGRESSION, AllureTag.AUTHORIZATION)
+@allure.parent_suite(AllureEpic.LMS)
+@allure.suite(AllureFeature.AUTHENTICATION)
+@allure.sub_suite(AllureStory.AUTHORIZATION)
 class TestAuthorization:
+    @allure.tag(AllureTag.NAVIGATION)
+    @allure.title("Navigation from login page to registration page")
+    @allure.severity(Severity.NORMAL)
     def test_navigate_from_authorization_to_registration(
             self,
             login_page: LoginPage,
@@ -17,6 +34,9 @@ class TestAuthorization:
 
         registration_page.registration_form.check_visible(email="", username="", password="")
 
+    @allure.tag(AllureTag.NAVIGATION)
+    @allure.title("User login with correct email and password")
+    @allure.severity(Severity.BLOCKER)
     def test_successful_authorization(
             self,
             login_page: LoginPage,
@@ -49,7 +69,11 @@ class TestAuthorization:
             ("user.name@gmail.com", "  "),
         ]
     )
+    @allure.tag(AllureTag.NAVIGATION, AllureTag.AUTHORIZATION)
+    @allure.title("User login with wrong email or password")
+    @allure.severity(Severity.CRITICAL)
     def test_wrong_email_or_password_authorization(self, login_page: LoginPage, email: str, password: str):
+        # allure.dynamic.title(f"Attempt to login with email: {email}")
         login_page.visit("https://nikita-filonov.github.io/qa-automation-engineer-ui-course/#/auth/login")
         login_page.login_form.fill(email=email, password=password)
         login_page.login_form.check_visible(email=email, password=password)
