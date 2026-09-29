@@ -1,23 +1,20 @@
 name: UI tests
-
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+
+permissions:
+  contents: write          # нужно для пуша в gh-pages
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -28,28 +25,42 @@ jobs:
           playwright install --with-deps
 
       - name: Run Playwright tests with pytest and generate Allure results
-        run: |
-          pytest -m regression --alluredir=./allure-results --numprocesses 2
+        run: pytest -m regression --alluredir=./allure-results -n 2
 
       - name: Get Allure history
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: always()
         continue-on-error: true
         with:
           ref: gh-pages
           path: gh-pages
 
-      - name: Allure Report action from marketplace
-        uses: simple-elf/allure-report-action@master
+      - name: Generate Allure report
         if: always()
-        id: allure-report
-        with:
-          allure_results: allure-results
-          allure_history: allure-history
+        run: |
+          set -e
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq default-jre-headless
+          V=2.32.0
+          curl -sSL -o allure.tgz "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/$V/allure-commandline-$V.tgz"
+          tar -xzf allure.tgz
+          mkdir -p allure-report allure-history
+          [ -d gh-pages ] && cp -r gh-pages/. allure-history/ || true
+          cp -r allure-history/last-history/. allure-results/history 2>/dev/null || true
+          if [ -n "$(ls -A allure-results 2>/dev/null)" ]; then
+            ./allure-$V/bin/allure generate --clean allure-results -o allure-report
+          else
+            echo '<h1>No test results</h1>' > allure-report/index.html
+          fi
+          mkdir -p "allure-history/${{ github.run_number }}" allure-history/last-history
+          cp -r allure-report/. "allure-history/${{ github.run_number }}/"
+          cp -r allure-report/history/. allure-history/last-history/ 2>/dev/null || true
+          echo '<!DOCTYPE html><meta charset="utf-8"><meta http-equiv="refresh" content="0; URL=/${{ github.run_number }}/index.html">' > allure-history/index.html
 
-      - name: Deploy report to Github Pages
-        uses: peaceiris/actions-gh-pages@v2
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: allure-history
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./allure-history
